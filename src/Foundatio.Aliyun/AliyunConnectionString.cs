@@ -40,7 +40,7 @@ namespace Foundatio {
                     else if (string.Equals(key, "EndPoint", StringComparison.OrdinalIgnoreCase) ||
                              string.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase) ||
                              string.Equals(key, "Address", StringComparison.OrdinalIgnoreCase)) {
-
+                        options.Endpoint = value;
                     }
                 }
             }
