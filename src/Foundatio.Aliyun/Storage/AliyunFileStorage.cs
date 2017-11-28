@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,10 +16,10 @@ namespace Foundatio.Storage {
         private readonly OssClient _client;
 
         public AliyunFileStorage(string connectionString, string bucketName = "storage") {
-            var account = AliyunConnectionString.Parse(connectionString);
+            var account = AliyunStorageAccount.Parse(connectionString);
             _client = account.CreateClient();
             _bucketName = bucketName;
-            if (!_client.DoesBucketExist(_bucketName)) _client.CreateBucket(_bucketName);
+            if (!DoesBucketExist(_bucketName)) _client.CreateBucket(_bucketName);
         }
 
         public void Dispose() { }
@@ -37,8 +38,28 @@ namespace Foundatio.Storage {
             return false;
         }
 
+        private Exception UnwrapException(Exception ex) {
+            if (ex is AggregateException aggregateException && aggregateException.InnerExceptions.Count == 1) {
+                return aggregateException.InnerExceptions[0];
+            }
+            return ex;
+        }
+
         private string NormalizePath(string path) {
             return path?.Replace('\\', '/');
+        }
+
+        private bool DoesBucketExist(string bucketName) {
+            try {
+                return _client.DoesBucketExist(bucketName);
+            }
+            catch (Exception ex) when (IsNotFoundException(ex)) {
+                return false;
+            }
+            catch (Exception ex) {
+                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
+                return false;
+            }
         }
 
         public async Task<Stream> GetFileStreamAsync(string path, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -81,6 +102,10 @@ namespace Foundatio.Storage {
             catch (Exception ex) when (IsNotFoundException(ex)) {
                 return Task.FromResult(false);
             }
+            catch (Exception ex) {
+                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
+                return Task.FromResult(false);
+            }
         }
 
         public async Task<bool> SaveFileAsync(string path, Stream stream, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -89,7 +114,7 @@ namespace Foundatio.Storage {
             }
             if (!stream.CanSeek) {
                 var memory = new MemoryStream();
-                await stream.CopyToAsync(memory);
+                await stream.CopyToAsync(memory).AnyContext();
                 memory.Position = 0;
                 stream = memory;
             }
@@ -113,8 +138,14 @@ namespace Foundatio.Storage {
             }
             oldpath = NormalizePath(oldpath);
             newpath = NormalizePath(newpath);
-            return await CopyFileAsync(oldpath, newpath, cancellationToken).AnyContext() &&
-                   await DeleteFileAsync(oldpath, cancellationToken).AnyContext();
+            try {
+                return await CopyFileAsync(oldpath, newpath, cancellationToken).AnyContext() &&
+                       await DeleteFileAsync(oldpath, cancellationToken).AnyContext();
+            }
+            catch (Exception ex) {
+                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
+                return false;
+            }
         }
 
         public async Task<bool> CopyFileAsync(string path, string targetpath, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -151,7 +182,12 @@ namespace Foundatio.Storage {
 
         public async Task DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default(CancellationToken)) {
             var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
-            _client.DeleteObjects(new DeleteObjectsRequest(_bucketName, files.Select(spec => spec.Path).ToList()));
+            try {
+                _client.DeleteObjects(new DeleteObjectsRequest(_bucketName, files.Select(spec => spec.Path).ToList()));
+            }
+            catch (Exception ex) {
+                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
+            }
         }
 
         public async Task<IEnumerable<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null,
@@ -173,16 +209,21 @@ namespace Foundatio.Storage {
             string marker = null;
             var blobs = new List<OssObjectSummary>();
             do {
-                var listing = await Task.Factory.FromAsync(
-                    (request, callback, state) => _client.BeginListObjects(request, callback, state),
-                    result => _client.EndListObjects(result), new ListObjectsRequest(_bucketName) {
-                        Prefix = prefix,
-                        Marker = marker,
-                        MaxKeys = limit
-                    }, null);
-                marker = listing.NextMarker;
+                try {
+                    var listing = await Task.Factory.FromAsync(
+                        (request, callback, state) => _client.BeginListObjects(request, callback, state),
+                        result => _client.EndListObjects(result), new ListObjectsRequest(_bucketName) {
+                            Prefix = prefix,
+                            Marker = marker,
+                            MaxKeys = limit
+                        }, null);
+                    marker = listing.NextMarker;
 
-                blobs.AddRange(listing.ObjectSummaries.Where(blob => patternRegex == null || patternRegex.IsMatch(blob.Key)));
+                    blobs.AddRange(listing.ObjectSummaries.Where(blob => patternRegex == null || patternRegex.IsMatch(blob.Key)));
+                }
+                catch (Exception ex) {
+                    ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
+                }
             } while (!string.IsNullOrEmpty(marker) && blobs.Count < limit.GetValueOrDefault(Int32.MaxValue));
 
             if (limit.HasValue)
