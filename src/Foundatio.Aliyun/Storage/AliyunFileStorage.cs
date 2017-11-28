@@ -192,7 +192,7 @@ namespace Foundatio.Storage {
                 marker = listing.NextMarker;
 
                 blobs.AddRange(listing.ObjectSummaries.Where(blob => patternRegex == null || patternRegex.IsMatch(blob.Key)));
-            } while (!string.IsNullOrEmpty(marker) && blobs.Count < limit.GetValueOrDefault(Int32.MaxValue));
+            } while (!cancellationToken.IsCancellationRequested && !string.IsNullOrEmpty(marker) && blobs.Count < limit.GetValueOrDefault(Int32.MaxValue));
 
             if (limit.HasValue)
                 blobs = blobs.Take(limit.Value).ToList();
