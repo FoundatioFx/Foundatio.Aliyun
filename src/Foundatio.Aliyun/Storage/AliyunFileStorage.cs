@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,13 +37,6 @@ namespace Foundatio.Storage {
             return false;
         }
 
-        private Exception UnwrapException(Exception ex) {
-            if (ex is AggregateException aggregateException && aggregateException.InnerExceptions.Count == 1) {
-                return aggregateException.InnerExceptions[0];
-            }
-            return ex;
-        }
-
         private string NormalizePath(string path) {
             return path?.Replace('\\', '/');
         }
@@ -54,10 +46,6 @@ namespace Foundatio.Storage {
                 return _client.DoesBucketExist(bucketName);
             }
             catch (Exception ex) when (IsNotFoundException(ex)) {
-                return false;
-            }
-            catch (Exception ex) {
-                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
                 return false;
             }
         }
@@ -102,10 +90,6 @@ namespace Foundatio.Storage {
             catch (Exception ex) when (IsNotFoundException(ex)) {
                 return Task.FromResult(false);
             }
-            catch (Exception ex) {
-                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
-                return Task.FromResult(false);
-            }
         }
 
         public async Task<bool> SaveFileAsync(string path, Stream stream, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -138,14 +122,8 @@ namespace Foundatio.Storage {
             }
             oldpath = NormalizePath(oldpath);
             newpath = NormalizePath(newpath);
-            try {
-                return await CopyFileAsync(oldpath, newpath, cancellationToken).AnyContext() &&
-                       await DeleteFileAsync(oldpath, cancellationToken).AnyContext();
-            }
-            catch (Exception ex) {
-                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
-                return false;
-            }
+            return await CopyFileAsync(oldpath, newpath, cancellationToken).AnyContext() &&
+                    await DeleteFileAsync(oldpath, cancellationToken).AnyContext();
         }
 
         public async Task<bool> CopyFileAsync(string path, string targetpath, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -182,12 +160,7 @@ namespace Foundatio.Storage {
 
         public async Task DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default(CancellationToken)) {
             var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
-            try {
-                _client.DeleteObjects(new DeleteObjectsRequest(_bucketName, files.Select(spec => spec.Path).ToList()));
-            }
-            catch (Exception ex) {
-                ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
-            }
+            _client.DeleteObjects(new DeleteObjectsRequest(_bucketName, files.Select(spec => spec.Path).ToList()));
         }
 
         public async Task<IEnumerable<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null,
@@ -209,21 +182,16 @@ namespace Foundatio.Storage {
             string marker = null;
             var blobs = new List<OssObjectSummary>();
             do {
-                try {
-                    var listing = await Task.Factory.FromAsync(
-                        (request, callback, state) => _client.BeginListObjects(request, callback, state),
-                        result => _client.EndListObjects(result), new ListObjectsRequest(_bucketName) {
-                            Prefix = prefix,
-                            Marker = marker,
-                            MaxKeys = limit
-                        }, null);
-                    marker = listing.NextMarker;
+                var listing = await Task.Factory.FromAsync(
+                    (request, callback, state) => _client.BeginListObjects(request, callback, state),
+                    result => _client.EndListObjects(result), new ListObjectsRequest(_bucketName) {
+                        Prefix = prefix,
+                        Marker = marker,
+                        MaxKeys = limit
+                    }, null);
+                marker = listing.NextMarker;
 
-                    blobs.AddRange(listing.ObjectSummaries.Where(blob => patternRegex == null || patternRegex.IsMatch(blob.Key)));
-                }
-                catch (Exception ex) {
-                    ExceptionDispatchInfo.Capture(UnwrapException(ex)).Throw();
-                }
+                blobs.AddRange(listing.ObjectSummaries.Where(blob => patternRegex == null || patternRegex.IsMatch(blob.Key)));
             } while (!string.IsNullOrEmpty(marker) && blobs.Count < limit.GetValueOrDefault(Int32.MaxValue));
 
             if (limit.HasValue)
