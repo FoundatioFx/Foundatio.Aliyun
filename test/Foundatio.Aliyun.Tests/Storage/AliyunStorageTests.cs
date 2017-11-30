@@ -1,20 +1,18 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Foundatio.Storage;
 using Foundatio.Tests.Storage;
 using Foundatio.Tests.Utility;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Foundatio.Aliyun.Tests.Storage
-{
-    public class AliyunStorageTests: FileStorageTestsBase {
-        public AliyunStorageTests(ITestOutputHelper output) : base(output)
-        {
-        }
+namespace Foundatio.Aliyun.Tests.Storage {
+    public class AliyunStorageTests : FileStorageTestsBase {
+        public AliyunStorageTests(ITestOutputHelper output) : base(output) { }
 
         protected override IFileStorage GetStorage() {
             string connectionString = Configuration.GetConnectionString("AliyunConnectionString");
-            if (string.IsNullOrEmpty(connectionString))
+            if (String.IsNullOrEmpty(connectionString))
                 return null;
 
             return new AliyunFileStorage(connectionString, Configuration.GetConnectionString("AliyunStorageBucket"));
