@@ -8,18 +8,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aliyun.OSS;
 using Foundatio.Extensions;
+using Foundatio.Serializer;
 
 namespace Foundatio.Storage {
     public class AliyunFileStorage : IFileStorage {
         private readonly string _bucketName;
         private readonly OssClient _client;
+        private readonly ISerializer _serializer;
 
-        public AliyunFileStorage(string connectionString, string bucketName = "storage") {
+        public AliyunFileStorage(string connectionString, string bucketName = "storage", ISerializer serializer = null) {
             var account = AliyunStorageAccount.Parse(connectionString);
             _client = account.CreateClient();
             _bucketName = bucketName;
+            _serializer = serializer ?? DefaultSerializer.Instance;
             if (!DoesBucketExist(_bucketName)) _client.CreateBucket(_bucketName);
         }
+
+        ISerializer IHaveSerializer.Serializer => _serializer;
 
         public async Task<Stream> GetFileStreamAsync(string path, CancellationToken cancellationToken = default(CancellationToken)) {
             if (String.IsNullOrEmpty(path))
