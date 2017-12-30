@@ -72,36 +72,40 @@ namespace Foundatio.Storage {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
-            if (!stream.CanSeek) {
-                var memory = new MemoryStream();
-                await stream.CopyToAsync(memory).AnyContext();
-                memory.Position = 0;
-                stream = memory;
-            }
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            if (!stream.CanSeek && stream.Position > 0)
+                throw new ArgumentOutOfRangeException(nameof(stream), "Unable to save unseekable stream with a position greater than 0");
+
+            var seekableStream = stream.CanSeek ? stream : new MemoryStream();
+            if (!stream.CanSeek)
+                await stream.CopyToAsync(seekableStream).AnyContext();
+
+            seekableStream.Seek(0, SeekOrigin.Begin);
 
             try {
-                var putResult = await Task.Factory.FromAsync(
-                    (request, callback, state) => _client.BeginPutObject(request, callback, state),
-                    result => _client.EndPutObject(result), new PutObjectRequest(_bucketName, NormalizePath(path), stream),
-                    null
-                ).AnyContext();
+                var putResult = await Task.Factory.FromAsync((request, callback, state) => _client.BeginPutObject(request, callback, state), result => _client.EndPutObject(result), new PutObjectRequest(_bucketName, NormalizePath(path), seekableStream), null).AnyContext();
                 return putResult.HttpStatusCode == HttpStatusCode.OK;
             } catch (Exception) {
                 return false;
+            } finally {
+                if (!stream.CanSeek)
+                    seekableStream.Dispose();
             }
         }
 
-        public async Task<bool> RenameFileAsync(string oldPath, string newPath, CancellationToken cancellationToken = default(CancellationToken)) {
-            if (String.IsNullOrEmpty(oldPath))
-                throw new ArgumentNullException(nameof(oldPath));
+        public async Task<bool> RenameFileAsync(string path, string newPath, CancellationToken cancellationToken = default(CancellationToken)) {
+            if (String.IsNullOrEmpty(path))
+                throw new ArgumentNullException(nameof(path));
 
             if (String.IsNullOrEmpty(newPath))
                 throw new ArgumentNullException(nameof(newPath));
 
-            oldPath = NormalizePath(oldPath);
+            path = NormalizePath(path);
             newPath = NormalizePath(newPath);
-            return await CopyFileAsync(oldPath, newPath, cancellationToken).AnyContext() &&
-                    await DeleteFileAsync(oldPath, cancellationToken).AnyContext();
+            return await CopyFileAsync(path, newPath, cancellationToken).AnyContext() &&
+                    await DeleteFileAsync(path, cancellationToken).AnyContext();
         }
 
         public async Task<bool> CopyFileAsync(string path, string targetPath, CancellationToken cancellationToken = default(CancellationToken)) {
