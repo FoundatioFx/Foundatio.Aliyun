@@ -75,14 +75,11 @@ namespace Foundatio.Storage {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            if (!stream.CanSeek && stream.Position > 0)
-                throw new ArgumentOutOfRangeException(nameof(stream), "Unable to save unseekable stream with a position greater than 0");
-
             var seekableStream = stream.CanSeek ? stream : new MemoryStream();
-            if (!stream.CanSeek)
+            if (!stream.CanSeek) {
                 await stream.CopyToAsync(seekableStream).AnyContext();
-
-            seekableStream.Seek(0, SeekOrigin.Begin);
+                seekableStream.Seek(0, SeekOrigin.Begin);
+            }
 
             try {
                 var putResult = await Task.Factory.FromAsync((request, callback, state) => _client.BeginPutObject(request, callback, state), result => _client.EndPutObject(result), new PutObjectRequest(_bucketName, NormalizePath(path), seekableStream), null).AnyContext();
