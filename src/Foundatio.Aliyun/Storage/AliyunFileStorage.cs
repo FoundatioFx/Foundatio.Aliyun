@@ -12,16 +12,19 @@ using Foundatio.Serializer;
 
 namespace Foundatio.Storage {
     public class AliyunFileStorage : IFileStorage {
-        private readonly string _bucketName;
+        private readonly string _bucket;
         private readonly OssClient _client;
         private readonly ISerializer _serializer;
 
-        public AliyunFileStorage(string connectionString, string bucketName = "storage", ISerializer serializer = null) {
-            var account = AliyunStorageAccount.Parse(connectionString);
+        public AliyunFileStorage(AliyunFileStorageOptions options) {
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            var account = AliyunStorageAccount.Parse(options.ConnectionString);
             _client = account.CreateClient();
-            _bucketName = bucketName;
-            _serializer = serializer ?? DefaultSerializer.Instance;
-            if (!DoesBucketExist(_bucketName)) _client.CreateBucket(_bucketName);
+            _bucket = options.Bucket;
+            _serializer = options.Serializer ?? DefaultSerializer.Instance;
+            if (!DoesBucketExist(_bucket)) _client.CreateBucket(_bucket);
         }
 
         ISerializer IHaveSerializer.Serializer => _serializer;
@@ -33,7 +36,7 @@ namespace Foundatio.Storage {
             var response = await Task.Factory.FromAsync(
                 (request, callback, state) => _client.BeginGetObject(request, callback, state),
                 result => _client.EndGetObject(result),
-                new GetObjectRequest(_bucketName, NormalizePath(path)),
+                new GetObjectRequest(_bucket, NormalizePath(path)),
                 null
             ).AnyContext();
             return response.Content;
@@ -45,7 +48,7 @@ namespace Foundatio.Storage {
 
             path = NormalizePath(path);
             try {
-                var metadata = _client.GetObjectMetadata(_bucketName, path);
+                var metadata = _client.GetObjectMetadata(_bucket, path);
                 return Task.FromResult(new FileSpec {
                     Path = path,
                     Size = metadata.ContentLength,
@@ -62,7 +65,7 @@ namespace Foundatio.Storage {
                 throw new ArgumentNullException(nameof(path));
 
             try {
-                return Task.FromResult(_client.DoesObjectExist(_bucketName, NormalizePath(path)));
+                return Task.FromResult(_client.DoesObjectExist(_bucket, NormalizePath(path)));
             } catch (Exception ex) when (IsNotFoundException(ex)) {
                 return Task.FromResult(false);
             }
@@ -82,7 +85,7 @@ namespace Foundatio.Storage {
             }
 
             try {
-                var putResult = await Task.Factory.FromAsync((request, callback, state) => _client.BeginPutObject(request, callback, state), result => _client.EndPutObject(result), new PutObjectRequest(_bucketName, NormalizePath(path), seekableStream), null).AnyContext();
+                var putResult = await Task.Factory.FromAsync((request, callback, state) => _client.BeginPutObject(request, callback, state), result => _client.EndPutObject(result), new PutObjectRequest(_bucket, NormalizePath(path), seekableStream), null).AnyContext();
                 return putResult.HttpStatusCode == HttpStatusCode.OK;
             } catch (Exception) {
                 return false;
@@ -116,7 +119,7 @@ namespace Foundatio.Storage {
                 var copyResult = await Task.Factory.FromAsync(
                     (request, callback, state) => _client.BeginCopyObject(request, callback, state),
                     result => _client.EndCopyResult(result),
-                    new CopyObjectRequest(_bucketName, NormalizePath(path), _bucketName, NormalizePath(targetPath)),
+                    new CopyObjectRequest(_bucket, NormalizePath(path), _bucket, NormalizePath(targetPath)),
                     null
                 ).AnyContext();
                 return copyResult.HttpStatusCode == HttpStatusCode.OK;
@@ -130,7 +133,7 @@ namespace Foundatio.Storage {
                 throw new ArgumentNullException(nameof(path));
 
             try {
-                _client.DeleteObject(_bucketName, NormalizePath(path));
+                _client.DeleteObject(_bucket, NormalizePath(path));
                 return Task.FromResult(true);
             } catch (Exception) {
                 return Task.FromResult(false);
@@ -139,7 +142,7 @@ namespace Foundatio.Storage {
 
         public async Task DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default(CancellationToken)) {
             var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
-            _client.DeleteObjects(new DeleteObjectsRequest(_bucketName, files.Select(spec => spec.Path).ToList()));
+            _client.DeleteObjects(new DeleteObjectsRequest(_bucket, files.Select(spec => spec.Path).ToList()));
         }
 
         public async Task<IEnumerable<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null,
@@ -163,7 +166,7 @@ namespace Foundatio.Storage {
             do {
                 var listing = await Task.Factory.FromAsync(
                     (request, callback, state) => _client.BeginListObjects(request, callback, state),
-                    result => _client.EndListObjects(result), new ListObjectsRequest(_bucketName) {
+                    result => _client.EndListObjects(result), new ListObjectsRequest(_bucket) {
                         Prefix = prefix,
                         Marker = marker,
                         MaxKeys = limit
