@@ -35,10 +35,14 @@ namespace Foundatio {
 
                 if (String.Equals(key, "AccessKeyId", StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(key, "Access Key Id", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(key, "AccessKey", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(key, "Access Key", StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(key, "Id", StringComparison.OrdinalIgnoreCase)) {
                     options.AccessKeyId = value;
                 } else if (String.Equals(key, "AccessKeySecret", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "Access Key Secret", StringComparison.OrdinalIgnoreCase) ||
+                           String.Equals(key, "SecretKey", StringComparison.OrdinalIgnoreCase) ||
+                           String.Equals(key, "Secret Key", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "Secret", StringComparison.OrdinalIgnoreCase)) {
                     options.AccessKeySecret = value;
                 } else if (String.Equals(key, "EndPoint", StringComparison.OrdinalIgnoreCase) ||
