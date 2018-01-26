@@ -22,7 +22,7 @@ namespace Foundatio.Storage {
 
             var account = AliyunStorageAccount.Parse(options.ConnectionString);
             _client = account.CreateClient();
-            _bucket = options.Bucket;
+            _bucket = account.Bucket;
             _serializer = options.Serializer ?? DefaultSerializer.Instance;
             if (!DoesBucketExist(_bucket)) _client.CreateBucket(_bucket);
         }

@@ -9,6 +9,8 @@ namespace Foundatio {
 
         public string AccessKeySecret { get; set; }
 
+        public string Bucket { get; set; } = "storage";
+
         public OssClient CreateClient() {
             return new OssClient(Endpoint, AccessKeyId, AccessKeySecret);
         }
@@ -33,16 +35,22 @@ namespace Foundatio {
 
                 if (String.Equals(key, "AccessKeyId", StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(key, "Access Key Id", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(key, "AccessKey", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(key, "Access Key", StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(key, "Id", StringComparison.OrdinalIgnoreCase)) {
                     options.AccessKeyId = value;
                 } else if (String.Equals(key, "AccessKeySecret", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "Access Key Secret", StringComparison.OrdinalIgnoreCase) ||
+                           String.Equals(key, "SecretKey", StringComparison.OrdinalIgnoreCase) ||
+                           String.Equals(key, "Secret Key", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "Secret", StringComparison.OrdinalIgnoreCase)) {
                     options.AccessKeySecret = value;
                 } else if (String.Equals(key, "EndPoint", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "Address", StringComparison.OrdinalIgnoreCase)) {
                     options.Endpoint = value;
+                } else if (String.Equals(key, "Bucket", StringComparison.OrdinalIgnoreCase)) {
+                    options.Bucket = value;
                 }
             }
 
