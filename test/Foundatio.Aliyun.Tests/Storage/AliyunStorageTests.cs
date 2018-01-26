@@ -16,8 +16,7 @@ namespace Foundatio.Aliyun.Tests.Storage {
                 return null;
 
             return new AliyunFileStorage(new AliyunFileStorageOptions {
-                ConnectionString = connectionString,
-                Bucket = Configuration.GetConnectionString("AliyunStorageBucket")
+                ConnectionString = connectionString
             });
         }
 

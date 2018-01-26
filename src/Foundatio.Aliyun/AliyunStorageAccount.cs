@@ -9,6 +9,8 @@ namespace Foundatio {
 
         public string AccessKeySecret { get; set; }
 
+        public string Bucket { get; set; } = "storage";
+
         public OssClient CreateClient() {
             return new OssClient(Endpoint, AccessKeyId, AccessKeySecret);
         }
@@ -43,6 +45,8 @@ namespace Foundatio {
                            String.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase) ||
                            String.Equals(key, "Address", StringComparison.OrdinalIgnoreCase)) {
                     options.Endpoint = value;
+                } else if (String.Equals(key, "Bucket", StringComparison.OrdinalIgnoreCase)) {
+                    options.Bucket = value;
                 }
             }
 
