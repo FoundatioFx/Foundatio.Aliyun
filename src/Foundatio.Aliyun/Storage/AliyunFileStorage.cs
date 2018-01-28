@@ -27,13 +27,8 @@ namespace Foundatio.Storage {
             if (!DoesBucketExist(_bucket)) _client.CreateBucket(_bucket);
         }
 
-        public AliyunFileStorage(Action<AliyunFileStorageOptions> config) : this(ConfigureOptions(config)) { }
-
-        private static AliyunFileStorageOptions ConfigureOptions(Action<AliyunFileStorageOptions> config) {
-            var options = new AliyunFileStorageOptions();
-            config?.Invoke(options);
-            return options;
-        }
+        public AliyunFileStorage(Action<IOptionsBuilder<AliyunFileStorageOptions>> config)
+            : this(OptionsBuilder<AliyunFileStorageOptions>.Build(config)) { }
 
         ISerializer IHaveSerializer.Serializer => _serializer;
 
