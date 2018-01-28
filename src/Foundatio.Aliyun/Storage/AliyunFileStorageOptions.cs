@@ -6,13 +6,13 @@ namespace Foundatio.Storage {
     }
 
     public static class AliyunFileStorageOptionsExtensions {
-        public static IOptionsBuilder<AliyunFileStorageOptions> ConnectionString(this IOptionsBuilder<AliyunFileStorageOptions> options, string connectionString) {
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
+        public static IOptionsBuilder<AliyunFileStorageOptions> ConnectionString(this IOptionsBuilder<AliyunFileStorageOptions> builder, string connectionString) {
+            if (builder == null)
+                throw new ArgumentNullException(nameof(builder));
             if (string.IsNullOrEmpty(connectionString))
                 throw new ArgumentNullException(nameof(connectionString));
-            options.Target.ConnectionString = connectionString;
-            return options;
+            builder.Target.ConnectionString = connectionString;
+            return builder;
         }
     }
 }
