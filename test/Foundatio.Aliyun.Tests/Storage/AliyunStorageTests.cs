@@ -15,9 +15,7 @@ namespace Foundatio.Aliyun.Tests.Storage {
             if (String.IsNullOrEmpty(connectionString))
                 return null;
 
-            return new AliyunFileStorage(new AliyunFileStorageOptions {
-                ConnectionString = connectionString
-            });
+            return new AliyunFileStorage(o => o.ConnectionString(connectionString));
         }
 
         [Fact]
