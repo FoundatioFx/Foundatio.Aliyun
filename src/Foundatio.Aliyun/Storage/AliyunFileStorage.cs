@@ -20,15 +20,15 @@ namespace Foundatio.Storage {
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
-            var account = AliyunStorageAccount.Parse(options.ConnectionString);
-            _client = account.CreateClient();
-            _bucket = account.Bucket;
+            var connectionString = new AliyunFileStorageConnectionStringBuilder(options.ConnectionString);
+            _client = new OssClient(connectionString.Endpoint, connectionString.AccessKey, connectionString.SecretKey);
+            _bucket = connectionString.Bucket;
             _serializer = options.Serializer ?? DefaultSerializer.Instance;
             if (!DoesBucketExist(_bucket)) _client.CreateBucket(_bucket);
         }
 
-        public AliyunFileStorage(Action<IOptionsBuilder<AliyunFileStorageOptions>> config)
-            : this(OptionsBuilder<AliyunFileStorageOptions>.Build(config)) { }
+        public AliyunFileStorage(Builder<AliyunFileStorageOptionsBuilder, AliyunFileStorageOptions> builder)
+            : this(builder(new AliyunFileStorageOptionsBuilder()).Build()) { }
 
         ISerializer IHaveSerializer.Serializer => _serializer;
 
