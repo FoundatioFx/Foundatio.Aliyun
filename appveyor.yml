@@ -9,7 +9,7 @@ pull_requests:
 environment: 
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true 
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  AliyunConnectionString:
+  ConnectionStrings__AliyunConnectionString:
     secure: bu62BFPD1L6g5lfBw+qvt0vqWgGK0K7vuNKVVt+mjfamjsAk080WJff7EE7q/9OmlgL9sUohnzPZgF7nGEnSKQ0eFhJdgvsf68jOmwpvaAsoNs0ks4AQqrHM+w4ptfZJ04tujRaE1JjGnwCiBgZajWhJooatJc93z5e03NEjOMU=
 
 init:
