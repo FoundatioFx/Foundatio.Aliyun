@@ -32,7 +32,7 @@ namespace Foundatio.Storage {
 
         ISerializer IHaveSerializer.Serializer => _serializer;
 
-        public async Task<Stream> GetFileStreamAsync(string path, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task<Stream> GetFileStreamAsync(string path, CancellationToken cancellationToken = default) {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
@@ -74,7 +74,7 @@ namespace Foundatio.Storage {
             }
         }
 
-        public async Task<bool> SaveFileAsync(string path, Stream stream, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task<bool> SaveFileAsync(string path, Stream stream, CancellationToken cancellationToken = default) {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
@@ -98,7 +98,7 @@ namespace Foundatio.Storage {
             }
         }
 
-        public async Task<bool> RenameFileAsync(string path, string newPath, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task<bool> RenameFileAsync(string path, string newPath, CancellationToken cancellationToken = default) {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
@@ -111,7 +111,7 @@ namespace Foundatio.Storage {
                     await DeleteFileAsync(path, cancellationToken).AnyContext();
         }
 
-        public async Task<bool> CopyFileAsync(string path, string targetPath, CancellationToken cancellationToken = default(CancellationToken)) {
+        public async Task<bool> CopyFileAsync(string path, string targetPath, CancellationToken cancellationToken = default) {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
@@ -131,7 +131,7 @@ namespace Foundatio.Storage {
             }
         }
 
-        public Task<bool> DeleteFileAsync(string path, CancellationToken cancellationToken = default(CancellationToken)) {
+        public Task<bool> DeleteFileAsync(string path, CancellationToken cancellationToken = default) {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
@@ -143,13 +143,13 @@ namespace Foundatio.Storage {
             }
         }
 
-        public async Task DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default(CancellationToken)) {
+        public async Task DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default) {
             var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
             _client.DeleteObjects(new DeleteObjectsRequest(_bucket, files.Select(spec => spec.Path).ToList()));
         }
 
         public async Task<IEnumerable<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null,
-            CancellationToken cancellationToken = default(CancellationToken)) {
+            CancellationToken cancellationToken = default) {
             if (limit.HasValue && limit.Value <= 0)
                 return new List<FileSpec>();
 

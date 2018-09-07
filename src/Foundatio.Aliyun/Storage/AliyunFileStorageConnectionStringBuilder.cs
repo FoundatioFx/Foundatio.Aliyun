@@ -11,7 +11,7 @@ namespace Foundatio.Storage {
         }
 
         public string Bucket {
-            get => string.IsNullOrEmpty(_bucket) ? "storage" : _bucket;
+            get => String.IsNullOrEmpty(_bucket) ? "storage" : _bucket;
             set => _bucket = value;
         }
 
@@ -24,8 +24,8 @@ namespace Foundatio.Storage {
         }
 
         public override string ToString() {
-            var connectionString = base.ToString();
-            if (!string.IsNullOrEmpty(_bucket))
+            string connectionString = base.ToString();
+            if (!String.IsNullOrEmpty(_bucket))
                 connectionString += "Bucket=" + Bucket + ";";
             return connectionString;
         }

@@ -38,7 +38,7 @@ namespace Foundatio.Aliyun.Tests.Storage {
 
         [Fact]
         public void CanParseBucket() {
-            foreach (var key in new[] { "Bucket", "bucket" }) {
+            foreach (string key in new[] { "Bucket", "bucket" }) {
                 var connectionStringBuilder = CreateConnectionStringBuilder($"AccessKey=TestAccessKey;SecretKey=TestSecretKey;{key}=TestBucket");
                 Assert.Equal("TestAccessKey", connectionStringBuilder.AccessKey);
                 Assert.Equal("TestSecretKey", connectionStringBuilder.SecretKey);

@@ -18,12 +18,12 @@ namespace Foundatio {
         }
 
         private void Parse(string connectionString) {
-            foreach (var option in connectionString
+            foreach (string[] option in connectionString
                 .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(kvp => kvp.Contains('='))
                 .Select(kvp => kvp.Split(new[] { '=' }, 2))) {
-                var optionKey = option[0].Trim();
-                var optionValue = option[1].Trim();
+                string optionKey = option[0].Trim();
+                string optionValue = option[1].Trim();
                 if (!ParseItem(optionKey, optionValue)) {
                     throw new ArgumentException($"The option '{optionKey}' cannot be recognized in connection string.", nameof(connectionString));
                 }
@@ -58,12 +58,12 @@ namespace Foundatio {
         }
 
         public override string ToString() {
-            var connectionString = string.Empty;
-            if (!string.IsNullOrEmpty(AccessKey))
+            string connectionString = String.Empty;
+            if (!String.IsNullOrEmpty(AccessKey))
                 connectionString += "AccessKey=" + AccessKey + ";";
-            if (!string.IsNullOrEmpty(SecretKey))
+            if (!String.IsNullOrEmpty(SecretKey))
                 connectionString += "SecretKey=" + SecretKey + ";";
-            if (!string.IsNullOrEmpty(Endpoint))
+            if (!String.IsNullOrEmpty(Endpoint))
                 connectionString += "EndPoint=" + Endpoint + ";";
             return connectionString;
         }
