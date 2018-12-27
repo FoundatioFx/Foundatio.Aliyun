@@ -11,12 +11,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		appveyor.yml = appveyor.yml
 		build\common.props = build\common.props
 		README.md = README.md
-		build\sourcelink.props = build\sourcelink.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C2B89C55-ADD0-419F-BA37-039FE531FFBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Foundatio.Aliyun.Tests", "test\Foundatio.Aliyun.Tests\Foundatio.Aliyun.Tests.csproj", "{2A515D1B-425D-4A6A-9953-5A12CC62DCEC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Foundatio.Aliyun.Tests", "test\Foundatio.Aliyun.Tests\Foundatio.Aliyun.Tests.csproj", "{2A515D1B-425D-4A6A-9953-5A12CC62DCEC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

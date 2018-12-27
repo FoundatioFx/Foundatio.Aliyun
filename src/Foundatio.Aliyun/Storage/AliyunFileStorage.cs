@@ -143,12 +143,78 @@ namespace Foundatio.Storage {
             }
         }
 
-        public async Task DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default) {
+        public async Task<int> DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default) {
             var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
-            _client.DeleteObjects(new DeleteObjectsRequest(_bucket, files.Select(spec => spec.Path).ToList()));
+            var result = _client.DeleteObjects(new DeleteObjectsRequest(_bucket, files.Select(spec => spec.Path).ToList()));
+
+            return result.Keys?.Length ?? 0;
         }
 
-        public async Task<IEnumerable<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null,
+        public async Task<PagedFileListResult> GetPagedFileListAsync(int pageSize = 100, string searchPattern = null, CancellationToken cancellationToken = default) {
+            if (pageSize <= 0)
+                return PagedFileListResult.Empty;
+
+            searchPattern = NormalizePath(searchPattern);
+
+            var result = new PagedFileListResult(r => GetFiles(searchPattern, 1, pageSize, cancellationToken));
+            await result.NextPageAsync().AnyContext();
+            return result;
+        }
+
+        private async Task<NextPageResult> GetFiles(string searchPattern, int page, int pageSize, CancellationToken cancellationToken) {
+            int pagingLimit = pageSize;
+            int skip = (page - 1) * pagingLimit;
+            if (pagingLimit < Int32.MaxValue)
+                pagingLimit = pagingLimit + 1;
+
+            searchPattern = searchPattern?.Replace('\\', '/');
+            string prefix = searchPattern;
+            Regex patternRegex = null;
+            int wildcardPos = searchPattern?.IndexOf('*') ?? -1;
+            if (searchPattern != null && wildcardPos >= 0) {
+                patternRegex = new Regex("^" + Regex.Escape(searchPattern).Replace("\\*", ".*?") + "$");
+                int slashPos = searchPattern.LastIndexOf('/');
+                prefix = slashPos >= 0 ? searchPattern.Substring(0, slashPos) : String.Empty;
+            }
+            prefix = prefix ?? String.Empty;
+
+            string marker = null;
+            var blobs = new List<OssObjectSummary>();
+            do {
+                var listing = await Task.Factory.FromAsync(
+                    (request, callback, state) => _client.BeginListObjects(request, callback, state),
+                    result => _client.EndListObjects(result), new ListObjectsRequest(_bucket) {
+                        Prefix = prefix,
+                        Marker = marker,
+                        MaxKeys = pagingLimit
+                    },
+                    null
+                ).AnyContext();
+                marker = listing.NextMarker;
+
+                blobs.AddRange(listing.ObjectSummaries.Where(blob => patternRegex == null || patternRegex.IsMatch(blob.Key)));
+            } while (!cancellationToken.IsCancellationRequested && !String.IsNullOrEmpty(marker) && blobs.Count < pagingLimit);
+
+            var list = blobs.Select(blob => new FileSpec {
+                    Path = blob.Key,
+                    Size = blob.Size,
+                    Created = blob.LastModified,
+                    Modified = blob.LastModified
+                })
+                .Take(pagingLimit)
+                .ToList();
+
+            bool hasMore = false;
+            if (list.Count == pagingLimit) {
+                hasMore = true;
+                list.RemoveAt(pagingLimit);
+            }
+
+            return new NextPageResult { Success = true, HasMore = hasMore, Files = list, NextPageFunc = r => GetFiles(searchPattern, page + 1, pageSize, cancellationToken) };
+        }
+
+
+        private async Task<IEnumerable<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null,
             CancellationToken cancellationToken = default) {
             if (limit.HasValue && limit.Value <= 0)
                 return new List<FileSpec>();
