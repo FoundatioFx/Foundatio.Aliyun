@@ -29,6 +29,11 @@ namespace Foundatio.Aliyun.Tests.Storage {
         }
 
         [Fact]
+        public override Task CanGetPagedFileListForSingleFolderAsync() {
+            return base.CanGetPagedFileListForSingleFolderAsync();
+        }
+
+        [Fact]
         public override Task CanGetFileInfoAsync() {
             return base.CanGetFileInfoAsync();
         }
