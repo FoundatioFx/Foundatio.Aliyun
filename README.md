@@ -1,6 +1,6 @@
 ![Foundatio](https://raw.githubusercontent.com/FoundatioFx/Foundatio/master/media/foundatio.png "Foundatio")
 
-[![Build status](https://ci.appveyor.com/api/projects/status/x90qsyrm3v2n19lw?svg=true)](https://ci.appveyor.com/project/Exceptionless/foundatio-azurestorage-agg58)
+[![Build status](https://github.com/FoundatioFx/Foundatio.Aliyun/workflows/Build/badge.svg)](https://github.com/FoundatioFx/Foundatio.Aliyun/actions)
 [![NuGet Version](http://img.shields.io/nuget/v/Foundatio.Aliyun.svg?style=flat)](https://www.nuget.org/packages/Foundatio.Aliyun/)
 [![Slack Status](https://slack.exceptionless.com/badge.svg)](https://slack.exceptionless.com)
 
