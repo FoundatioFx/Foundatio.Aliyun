@@ -43,6 +43,7 @@ namespace Foundatio.Storage {
             : this(builder(new AliyunFileStorageOptionsBuilder()).Build()) { }
 
         ISerializer IHaveSerializer.Serializer => _serializer;
+        public OssClient Client => _client;
 
         public async Task<Stream> GetFileStreamAsync(string path, CancellationToken cancellationToken = default) {
             if (String.IsNullOrEmpty(path))
