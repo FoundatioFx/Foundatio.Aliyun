@@ -13,14 +13,17 @@ using Foundatio.Serializer;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Foundatio.Storage {
-    public class AliyunFileStorage : IFileStorage {
+namespace Foundatio.Storage
+{
+    public class AliyunFileStorage : IFileStorage
+    {
         private readonly string _bucket;
         private readonly OssClient _client;
         private readonly ISerializer _serializer;
         protected readonly ILogger _logger;
 
-        public AliyunFileStorage(AliyunFileStorageOptions options) {
+        public AliyunFileStorage(AliyunFileStorageOptions options)
+        {
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
@@ -61,54 +64,66 @@ namespace Foundatio.Storage {
             _logger.LogTrace("Getting file stream for {Path}", normalizedPath);
 
             var response = await Task.Factory.FromAsync(_client.BeginGetObject, _client.EndGetObject, new GetObjectRequest(_bucket, normalizedPath), null).AnyContext();
-            if (!response.HttpStatusCode.IsSuccessful()) {
+            if (!response.HttpStatusCode.IsSuccessful())
+            {
                 _logger.LogError("[{HttpStatusCode}] Unable to get file stream for {Path}", response.HttpStatusCode, normalizedPath);
                 return null;
             }
 
-            return new ActionableStream(response.ResponseStream, () => {
+            return new ActionableStream(response.ResponseStream, () =>
+            {
                 _logger.LogTrace("Disposing file stream for {Path}", normalizedPath);
                 response.Dispose();
             });
         }
 
-        public Task<FileSpec> GetFileInfoAsync(string path) {
+        public Task<FileSpec> GetFileInfoAsync(string path)
+        {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
             string normalizedPath = NormalizePath(path);
             _logger.LogTrace("Getting file info for {Path}", normalizedPath);
-            
-            try {
+
+            try
+            {
                 var metadata = _client.GetObjectMetadata(_bucket, normalizedPath);
-                return Task.FromResult(new FileSpec {
+                return Task.FromResult(new FileSpec
+                {
                     Path = normalizedPath,
                     Size = metadata.ContentLength,
                     Created = metadata.LastModified,
                     Modified = metadata.LastModified
                 });
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError(ex, "Unable to get file info for {Path}: {Message}", path, ex.Message);
                 return Task.FromResult((FileSpec)null);
             }
         }
 
-        public Task<bool> ExistsAsync(string path) {
+        public Task<bool> ExistsAsync(string path)
+        {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
             string normalizedPath = NormalizePath(path);
             _logger.LogTrace("Checking if {Path} exists", normalizedPath);
-            
-            try {
+
+            try
+            {
                 return Task.FromResult(_client.DoesObjectExist(_bucket, normalizedPath));
-            } catch (Exception ex) when (IsNotFoundException(ex)) {
+            }
+            catch (Exception ex) when (IsNotFoundException(ex))
+            {
                 _logger.LogDebug(ex, "Unable to check if {Path} exists: {Message}", normalizedPath, ex.Message);
                 return Task.FromResult(false);
             }
         }
 
-        public async Task<bool> SaveFileAsync(string path, Stream stream, CancellationToken cancellationToken = default) {
+        public async Task<bool> SaveFileAsync(string path, Stream stream, CancellationToken cancellationToken = default)
+        {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
             if (stream == null)
@@ -118,24 +133,31 @@ namespace Foundatio.Storage {
             _logger.LogTrace("Saving {Path}", normalizedPath);
 
             var seekableStream = stream.CanSeek ? stream : new MemoryStream();
-            if (!stream.CanSeek) {
+            if (!stream.CanSeek)
+            {
                 await stream.CopyToAsync(seekableStream).AnyContext();
                 seekableStream.Seek(0, SeekOrigin.Begin);
             }
 
-            try {
+            try
+            {
                 var putResult = await Task.Factory.FromAsync(_client.BeginPutObject, _client.EndPutObject, new PutObjectRequest(_bucket, normalizedPath, seekableStream), null).AnyContext();
                 return putResult.HttpStatusCode == HttpStatusCode.OK;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError(ex, "Error saving {Path}: {Message}", normalizedPath, ex.Message);
                 return false;
-            } finally {
+            }
+            finally
+            {
                 if (!stream.CanSeek)
                     seekableStream.Dispose();
             }
         }
 
-        public async Task<bool> RenameFileAsync(string path, string newPath, CancellationToken cancellationToken = default) {
+        public async Task<bool> RenameFileAsync(string path, string newPath, CancellationToken cancellationToken = default)
+        {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
             if (String.IsNullOrEmpty(newPath))
@@ -149,7 +171,8 @@ namespace Foundatio.Storage {
                    await DeleteFileAsync(normalizedPath, cancellationToken).AnyContext();
         }
 
-        public async Task<bool> CopyFileAsync(string path, string targetPath, CancellationToken cancellationToken = default) {
+        public async Task<bool> CopyFileAsync(string path, string targetPath, CancellationToken cancellationToken = default)
+        {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
             if (String.IsNullOrEmpty(targetPath))
@@ -158,38 +181,46 @@ namespace Foundatio.Storage {
             string normalizedPath = NormalizePath(path);
             string normalizedTargetPath = NormalizePath(targetPath);
             _logger.LogInformation("Copying {Path} to {TargetPath}", normalizedPath, normalizedTargetPath);
-            
-            try {
+
+            try
+            {
                 var copyResult = await Task.Factory.FromAsync(
-                    _client.BeginCopyObject, 
+                    _client.BeginCopyObject,
                     _client.EndCopyResult,
                     new CopyObjectRequest(_bucket, normalizedPath, _bucket, normalizedTargetPath),
                     null
                 ).AnyContext();
                 return copyResult.HttpStatusCode == HttpStatusCode.OK;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError(ex, "Error copying {Path} to {TargetPath}: {Message}", normalizedPath, normalizedTargetPath, ex.Message);
                 return false;
             }
         }
 
-        public Task<bool> DeleteFileAsync(string path, CancellationToken cancellationToken = default) {
+        public Task<bool> DeleteFileAsync(string path, CancellationToken cancellationToken = default)
+        {
             if (String.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
             string normalizedPath = NormalizePath(path);
             _logger.LogTrace("Deleting {Path}", normalizedPath);
-            
-            try {
+
+            try
+            {
                 var deleteResult = _client.DeleteObject(_bucket, normalizedPath);
                 return Task.FromResult(deleteResult.HttpStatusCode == HttpStatusCode.OK);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _logger.LogError(ex, "Unable to delete {Path}: File not found", normalizedPath);
                 return Task.FromResult(false);
             }
         }
 
-        public async Task<int> DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default) {
+        public async Task<int> DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default)
+        {
             var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
             _logger.LogInformation("Deleting {FileCount} files matching {SearchPattern}", files.Count, searchPattern);
             var result = _client.DeleteObjects(new DeleteObjectsRequest(_bucket, files.Select(spec => spec.Path).ToList()));
@@ -201,7 +232,8 @@ namespace Foundatio.Storage {
             return count;
         }
 
-        public async Task<PagedFileListResult> GetPagedFileListAsync(int pageSize = 100, string searchPattern = null, CancellationToken cancellationToken = default) {
+        public async Task<PagedFileListResult> GetPagedFileListAsync(int pageSize = 100, string searchPattern = null, CancellationToken cancellationToken = default)
+        {
             if (pageSize <= 0)
                 return PagedFileListResult.Empty;
 
@@ -210,7 +242,8 @@ namespace Foundatio.Storage {
             return result;
         }
 
-        private async Task<NextPageResult> GetFiles(string searchPattern, int page, int pageSize, CancellationToken cancellationToken) {
+        private async Task<NextPageResult> GetFiles(string searchPattern, int page, int pageSize, CancellationToken cancellationToken)
+        {
             var criteria = GetRequestCriteria(searchPattern);
 
             int pagingLimit = pageSize;
@@ -226,11 +259,13 @@ namespace Foundatio.Storage {
             string marker = null;
             int totalLimit = pagingLimit < Int32.MaxValue ? skip + pagingLimit : Int32.MaxValue;
             var blobs = new List<OssObjectSummary>();
-            do {
+            do
+            {
                 var listing = await Task.Factory.FromAsync(
                     _client.BeginListObjects,
                     _client.EndListObjects,
-                    new ListObjectsRequest(_bucket) {
+                    new ListObjectsRequest(_bucket)
+                    {
                         Prefix = criteria.Prefix,
                         Marker = marker,
                         MaxKeys = pagingLimit
@@ -239,8 +274,10 @@ namespace Foundatio.Storage {
                 ).AnyContext();
                 marker = listing.NextMarker;
 
-                foreach (var blob in listing.ObjectSummaries) {
-                    if (criteria.Pattern != null && !criteria.Pattern.IsMatch(blob.Key)) {
+                foreach (var blob in listing.ObjectSummaries)
+                {
+                    if (criteria.Pattern != null && !criteria.Pattern.IsMatch(blob.Key))
+                    {
                         _logger.LogTrace("Skipping {Path}: Doesn't match pattern", blob.Key);
                         continue;
                     }
@@ -252,7 +289,8 @@ namespace Foundatio.Storage {
             var list = blobs
                 .Skip(skip)
                 .Take(pagingLimit)
-                .Select(blob => new FileSpec {
+                .Select(blob => new FileSpec
+                {
                     Path = blob.Key,
                     Size = blob.Size,
                     Created = blob.LastModified,
@@ -261,12 +299,14 @@ namespace Foundatio.Storage {
                 .ToList();
 
             bool hasMore = false;
-            if (list.Count == pagingLimit) {
+            if (list.Count == pagingLimit)
+            {
                 hasMore = true;
                 list.RemoveAt(pagingLimit - 1);
             }
 
-            return new NextPageResult {
+            return new NextPageResult
+            {
                 Success = true,
                 HasMore = hasMore,
                 Files = list,
@@ -274,7 +314,8 @@ namespace Foundatio.Storage {
             };
         }
 
-        private async Task<List<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null, CancellationToken cancellationToken = default) {
+        private async Task<List<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null, CancellationToken cancellationToken = default)
+        {
             if (limit is <= 0)
                 return new List<FileSpec>();
 
@@ -291,11 +332,13 @@ namespace Foundatio.Storage {
 
             string marker = null;
             var blobs = new List<OssObjectSummary>();
-            do {
+            do
+            {
                 var listing = await Task.Factory.FromAsync(
                     _client.BeginListObjects,
                     _client.EndListObjects,
-                    new ListObjectsRequest(_bucket) {
+                    new ListObjectsRequest(_bucket)
+                    {
                         Prefix = criteria.Prefix,
                         Marker = marker,
                         MaxKeys = limit
@@ -304,8 +347,10 @@ namespace Foundatio.Storage {
                 ).AnyContext();
                 marker = listing.NextMarker;
 
-                foreach (var blob in listing.ObjectSummaries) {
-                    if (criteria.Pattern != null && !criteria.Pattern.IsMatch(blob.Key)) {
+                foreach (var blob in listing.ObjectSummaries)
+                {
+                    if (criteria.Pattern != null && !criteria.Pattern.IsMatch(blob.Key))
+                    {
                         _logger.LogTrace("Skipping {Path}: Doesn't match pattern", blob.Key);
                         continue;
                     }
@@ -320,7 +365,8 @@ namespace Foundatio.Storage {
             if (limit.HasValue)
                 blobs = blobs.Take(limit.Value).ToList();
 
-            return blobs.Select(blob => new FileSpec {
+            return blobs.Select(blob => new FileSpec
+            {
                 Path = blob.Key,
                 Size = blob.Size,
                 Created = blob.LastModified,
@@ -328,12 +374,14 @@ namespace Foundatio.Storage {
             }).ToList();
         }
 
-        private class SearchCriteria {
+        private class SearchCriteria
+        {
             public string Prefix { get; set; }
             public Regex Pattern { get; set; }
         }
 
-        private SearchCriteria GetRequestCriteria(string searchPattern) {
+        private SearchCriteria GetRequestCriteria(string searchPattern)
+        {
             if (String.IsNullOrEmpty(searchPattern))
                 return new SearchCriteria { Prefix = String.Empty };
 
@@ -344,13 +392,15 @@ namespace Foundatio.Storage {
             string prefix = normalizedSearchPattern;
             Regex patternRegex = null;
 
-            if (hasWildcard) {
+            if (hasWildcard)
+            {
                 patternRegex = new Regex($"^{Regex.Escape(normalizedSearchPattern).Replace("\\*", ".*?")}$");
                 int slashPos = normalizedSearchPattern.LastIndexOf('/');
                 prefix = slashPos >= 0 ? normalizedSearchPattern.Substring(0, slashPos) : String.Empty;
             }
 
-            return new SearchCriteria {
+            return new SearchCriteria
+            {
                 Prefix = prefix,
                 Pattern = patternRegex
             };
@@ -358,9 +408,12 @@ namespace Foundatio.Storage {
 
         public void Dispose() { }
 
-        private bool IsNotFoundException(Exception ex) {
-            if (ex is AggregateException aggregateException) {
-                foreach (var innerException in aggregateException.InnerExceptions) {
+        private bool IsNotFoundException(Exception ex)
+        {
+            if (ex is AggregateException aggregateException)
+            {
+                foreach (var innerException in aggregateException.InnerExceptions)
+                {
                     if (IsNotFoundException(innerException))
                         return true;
                 }
@@ -372,15 +425,20 @@ namespace Foundatio.Storage {
             return false;
         }
 
-        private string NormalizePath(string path) {
+        private string NormalizePath(string path)
+        {
             return path?.Replace('\\', '/');
         }
 
-        private bool DoesBucketExist(string bucketName) {
+        private bool DoesBucketExist(string bucketName)
+        {
             _logger.LogTrace("Checking if bucket {Bucket} exists", _bucket);
-            try {
+            try
+            {
                 return _client.DoesBucketExist(bucketName);
-            } catch (Exception ex) when (IsNotFoundException(ex)) {
+            }
+            catch (Exception ex) when (IsNotFoundException(ex))
+            {
                 _logger.LogError(ex, "Unable to check if {Bucket} bucket exists: {Message}", bucketName, ex.Message);
                 return false;
             }

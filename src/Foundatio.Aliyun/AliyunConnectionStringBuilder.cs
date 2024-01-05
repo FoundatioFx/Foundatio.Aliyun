@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Linq;
 
-namespace Foundatio {
-    public abstract class AliyunConnectionStringBuilder {
+namespace Foundatio
+{
+    public abstract class AliyunConnectionStringBuilder
+    {
         public string Endpoint { get; set; }
 
         public string AccessKey { get; set; }
@@ -11,31 +13,37 @@ namespace Foundatio {
 
         protected AliyunConnectionStringBuilder() { }
 
-        protected AliyunConnectionStringBuilder(string connectionString) {
+        protected AliyunConnectionStringBuilder(string connectionString)
+        {
             if (String.IsNullOrEmpty(connectionString))
                 throw new ArgumentNullException(nameof(connectionString));
             Parse(connectionString);
         }
 
-        private void Parse(string connectionString) {
+        private void Parse(string connectionString)
+        {
             foreach (string[] option in connectionString
                 .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(kvp => kvp.Contains('='))
-                .Select(kvp => kvp.Split(new[] { '=' }, 2))) {
+                .Select(kvp => kvp.Split(new[] { '=' }, 2)))
+            {
                 string optionKey = option[0].Trim();
                 string optionValue = option[1].Trim();
-                if (!ParseItem(optionKey, optionValue)) {
+                if (!ParseItem(optionKey, optionValue))
+                {
                     throw new ArgumentException($"The option '{optionKey}' cannot be recognized in connection string.", nameof(connectionString));
                 }
             }
         }
 
-        protected virtual bool ParseItem(string key, string value) {
+        protected virtual bool ParseItem(string key, string value)
+        {
             if (String.Equals(key, "AccessKey", StringComparison.OrdinalIgnoreCase) ||
                 String.Equals(key, "Access Key", StringComparison.OrdinalIgnoreCase) ||
                 String.Equals(key, "AccessKeyId", StringComparison.OrdinalIgnoreCase) ||
                 String.Equals(key, "Access Key Id", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Id", StringComparison.OrdinalIgnoreCase)) {
+                String.Equals(key, "Id", StringComparison.OrdinalIgnoreCase))
+            {
                 AccessKey = value;
                 return true;
             }
@@ -45,19 +53,22 @@ namespace Foundatio {
                 String.Equals(key, "Secret Access Key", StringComparison.OrdinalIgnoreCase) ||
                 String.Equals(key, "AccessKeySecret", StringComparison.OrdinalIgnoreCase) ||
                 String.Equals(key, "Access Key Secret", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Secret", StringComparison.OrdinalIgnoreCase)) {
+                String.Equals(key, "Secret", StringComparison.OrdinalIgnoreCase))
+            {
                 SecretKey = value;
                 return true;
             }
             if (String.Equals(key, "EndPoint", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase)) {
+                String.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase))
+            {
                 Endpoint = value;
                 return true;
             }
             return false;
         }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             string connectionString = String.Empty;
             if (!String.IsNullOrEmpty(AccessKey))
                 connectionString += "AccessKey=" + AccessKey + ";";
