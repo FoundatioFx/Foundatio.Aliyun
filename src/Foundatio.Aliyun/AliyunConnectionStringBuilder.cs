@@ -1,82 +1,81 @@
 ﻿using System;
 using System.Linq;
 
-namespace Foundatio
+namespace Foundatio;
+
+public abstract class AliyunConnectionStringBuilder
 {
-    public abstract class AliyunConnectionStringBuilder
+    public string Endpoint { get; set; }
+
+    public string AccessKey { get; set; }
+
+    public string SecretKey { get; set; }
+
+    protected AliyunConnectionStringBuilder() { }
+
+    protected AliyunConnectionStringBuilder(string connectionString)
     {
-        public string Endpoint { get; set; }
+        if (String.IsNullOrEmpty(connectionString))
+            throw new ArgumentNullException(nameof(connectionString));
+        Parse(connectionString);
+    }
 
-        public string AccessKey { get; set; }
-
-        public string SecretKey { get; set; }
-
-        protected AliyunConnectionStringBuilder() { }
-
-        protected AliyunConnectionStringBuilder(string connectionString)
+    private void Parse(string connectionString)
+    {
+        foreach (string[] option in connectionString
+            .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(kvp => kvp.Contains('='))
+            .Select(kvp => kvp.Split(new[] { '=' }, 2)))
         {
-            if (String.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException(nameof(connectionString));
-            Parse(connectionString);
-        }
-
-        private void Parse(string connectionString)
-        {
-            foreach (string[] option in connectionString
-                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(kvp => kvp.Contains('='))
-                .Select(kvp => kvp.Split(new[] { '=' }, 2)))
+            string optionKey = option[0].Trim();
+            string optionValue = option[1].Trim();
+            if (!ParseItem(optionKey, optionValue))
             {
-                string optionKey = option[0].Trim();
-                string optionValue = option[1].Trim();
-                if (!ParseItem(optionKey, optionValue))
-                {
-                    throw new ArgumentException($"The option '{optionKey}' cannot be recognized in connection string.", nameof(connectionString));
-                }
+                throw new ArgumentException($"The option '{optionKey}' cannot be recognized in connection string.", nameof(connectionString));
             }
         }
+    }
 
-        protected virtual bool ParseItem(string key, string value)
+    protected virtual bool ParseItem(string key, string value)
+    {
+        if (String.Equals(key, "AccessKey", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Access Key", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "AccessKeyId", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Access Key Id", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Id", StringComparison.OrdinalIgnoreCase))
         {
-            if (String.Equals(key, "AccessKey", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Access Key", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "AccessKeyId", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Access Key Id", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Id", StringComparison.OrdinalIgnoreCase))
-            {
-                AccessKey = value;
-                return true;
-            }
-            if (String.Equals(key, "SecretKey", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Secret Key", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "SecretAccessKey", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Secret Access Key", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "AccessKeySecret", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Access Key Secret", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "Secret", StringComparison.OrdinalIgnoreCase))
-            {
-                SecretKey = value;
-                return true;
-            }
-            if (String.Equals(key, "EndPoint", StringComparison.OrdinalIgnoreCase) ||
-                String.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase))
-            {
-                Endpoint = value;
-                return true;
-            }
-            return false;
+            AccessKey = value;
+            return true;
         }
+        if (String.Equals(key, "SecretKey", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Secret Key", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "SecretAccessKey", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Secret Access Key", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "AccessKeySecret", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Access Key Secret", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "Secret", StringComparison.OrdinalIgnoreCase))
+        {
+            SecretKey = value;
+            return true;
+        }
+        if (String.Equals(key, "EndPoint", StringComparison.OrdinalIgnoreCase) ||
+            String.Equals(key, "End Point", StringComparison.OrdinalIgnoreCase))
+        {
+            Endpoint = value;
+            return true;
+        }
+        return false;
+    }
 
-        public override string ToString()
-        {
-            string connectionString = String.Empty;
-            if (!String.IsNullOrEmpty(AccessKey))
-                connectionString += "AccessKey=" + AccessKey + ";";
-            if (!String.IsNullOrEmpty(SecretKey))
-                connectionString += "SecretKey=" + SecretKey + ";";
-            if (!String.IsNullOrEmpty(Endpoint))
-                connectionString += "EndPoint=" + Endpoint + ";";
-            return connectionString;
-        }
+    public override string ToString()
+    {
+        string connectionString = String.Empty;
+        if (!String.IsNullOrEmpty(AccessKey))
+            connectionString += "AccessKey=" + AccessKey + ";";
+        if (!String.IsNullOrEmpty(SecretKey))
+            connectionString += "SecretKey=" + SecretKey + ";";
+        if (!String.IsNullOrEmpty(Endpoint))
+            connectionString += "EndPoint=" + Endpoint + ";";
+        return connectionString;
     }
 }
