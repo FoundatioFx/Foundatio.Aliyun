@@ -34,6 +34,12 @@ public class AliyunStorageTests : FileStorageTestsBase
     }
 
     [Fact]
+    public override Task CanGetFileListForSingleFileAsync()
+    {
+        return base.CanGetFileListForSingleFileAsync();
+    }
+
+    [Fact]
     public override Task CanGetPagedFileListForSingleFolderAsync()
     {
         return base.CanGetPagedFileListForSingleFolderAsync();
@@ -127,5 +133,17 @@ public class AliyunStorageTests : FileStorageTestsBase
     public override Task WillRespectStreamOffsetAsync()
     {
         return base.WillRespectStreamOffsetAsync();
+    }
+
+    [Fact]
+    public override Task WillWriteStreamContentAsync()
+    {
+        return base.WillWriteStreamContentAsync();
+    }
+
+    [Fact]
+    public override Task CanSaveOverExistingStoredContent()
+    {
+        return base.CanSaveOverExistingStoredContent();
     }
 }
