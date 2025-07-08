@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="build/common.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/Foundatio.Aliyun.Tests/Foundatio.Aliyun.Tests.csproj" />
+  </Folder>
+  <Project Path="src/Foundatio.Aliyun/Foundatio.Aliyun.csproj" />
+</Solution>
