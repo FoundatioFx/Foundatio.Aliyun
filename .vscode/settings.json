@@ -1,10 +1,13 @@
 {
   "cSpell.words": [
+    "Aliyun",
     "Dgram",
-    "Sachin",
-    "Xunit",
+    "Foundatio",
     "mygauge",
-    "unscoped"
+    "Sachin",
+    "slnx",
+    "unscoped",
+    "Xunit"
   ],
   "msbuildProjectTools.nuget.includePreRelease": true
 }
