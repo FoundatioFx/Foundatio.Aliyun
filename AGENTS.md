@@ -142,8 +142,8 @@ Before writing any implementation code, think critically:
 
 Before marking work complete, verify:
 
-1. **Builds successfully**: `dotnet build Foundatio.slnx` exits with code 0
-2. **All tests pass**: `dotnet test Foundatio.slnx` shows no failures
+1. **Builds successfully**: `dotnet build Foundatio.Aliyun.slnx` exits with code 0
+2. **All tests pass**: `dotnet test Foundatio.Aliyun.slnx` shows no failures
 3. **No new warnings**: Check build output for new compiler warnings
 4. **API compatibility**: Public API changes are intentional and backward-compatible when possible
 5. **Documentation updated**: XML doc comments added/updated for public APIs
