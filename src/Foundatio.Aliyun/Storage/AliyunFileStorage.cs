@@ -49,10 +49,10 @@ public class AliyunFileStorage : IFileStorage
     public OssClient Client => _client;
 
     [Obsolete($"Use {nameof(GetFileStreamAsync)} with {nameof(FileAccess)} instead to define read or write behaviour of stream")]
-    public Task<Stream> GetFileStreamAsync(string path, CancellationToken cancellationToken = default)
+    public Task<Stream?> GetFileStreamAsync(string path, CancellationToken cancellationToken = default)
         => GetFileStreamAsync(path, StreamMode.Read, cancellationToken);
 
-    public async Task<Stream> GetFileStreamAsync(string path, StreamMode streamMode, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetFileStreamAsync(string path, StreamMode streamMode, CancellationToken cancellationToken = default)
     {
         if (String.IsNullOrEmpty(path))
             throw new ArgumentNullException(nameof(path));
@@ -77,7 +77,7 @@ public class AliyunFileStorage : IFileStorage
         });
     }
 
-    public Task<FileSpec> GetFileInfoAsync(string path)
+    public Task<FileSpec?> GetFileInfoAsync(string path)
     {
         if (String.IsNullOrEmpty(path))
             throw new ArgumentNullException(nameof(path));
@@ -88,7 +88,7 @@ public class AliyunFileStorage : IFileStorage
         try
         {
             var metadata = _client.GetObjectMetadata(_bucket, normalizedPath);
-            return Task.FromResult(new FileSpec
+            return Task.FromResult<FileSpec?>(new FileSpec
             {
                 Path = normalizedPath,
                 Size = metadata.ContentLength,
@@ -99,7 +99,7 @@ public class AliyunFileStorage : IFileStorage
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unable to get file info for {Path}: {Message}", path, ex.Message);
-            return Task.FromResult((FileSpec)null);
+            return Task.FromResult<FileSpec?>(null);
         }
     }
 
@@ -219,7 +219,7 @@ public class AliyunFileStorage : IFileStorage
         }
     }
 
-    public async Task<int> DeleteFilesAsync(string searchPattern = null, CancellationToken cancellation = default)
+    public async Task<int> DeleteFilesAsync(string? searchPattern = null, CancellationToken cancellation = default)
     {
         var files = await GetFileListAsync(searchPattern, cancellationToken: cancellation).AnyContext();
         _logger.LogInformation("Deleting {FileCount} files matching {SearchPattern}", files.Count, searchPattern);
@@ -232,7 +232,7 @@ public class AliyunFileStorage : IFileStorage
         return count;
     }
 
-    public async Task<PagedFileListResult> GetPagedFileListAsync(int pageSize = 100, string searchPattern = null, CancellationToken cancellationToken = default)
+    public async Task<PagedFileListResult> GetPagedFileListAsync(int pageSize = 100, string? searchPattern = null, CancellationToken cancellationToken = default)
     {
         if (pageSize <= 0)
             return PagedFileListResult.Empty;
@@ -242,7 +242,7 @@ public class AliyunFileStorage : IFileStorage
         return result;
     }
 
-    private async Task<NextPageResult> GetFiles(string searchPattern, int page, int pageSize, CancellationToken cancellationToken)
+    private async Task<NextPageResult> GetFiles(string? searchPattern, int page, int pageSize, CancellationToken cancellationToken)
     {
         var criteria = GetRequestCriteria(searchPattern);
 
@@ -253,10 +253,10 @@ public class AliyunFileStorage : IFileStorage
 
         _logger.LogTrace(
             s => s.Property("SearchPattern", searchPattern).Property("Limit", pagingLimit).Property("Skip", skip),
-            "Getting file list matching {Prefix} and {Pattern}...", criteria.Prefix, criteria.Pattern
+            "Getting file list matching {Prefix} and {Pattern}...", criteria.Prefix, criteria.Pattern!
         );
 
-        string marker = null;
+        string? marker = null;
         int totalLimit = pagingLimit < Int32.MaxValue ? skip + pagingLimit : Int32.MaxValue;
         var blobs = new List<OssObjectSummary>();
         do
@@ -314,7 +314,7 @@ public class AliyunFileStorage : IFileStorage
         };
     }
 
-    private async Task<List<FileSpec>> GetFileListAsync(string searchPattern = null, int? limit = null, int? skip = null, CancellationToken cancellationToken = default)
+    private async Task<List<FileSpec>> GetFileListAsync(string? searchPattern = null, int? limit = null, int? skip = null, CancellationToken cancellationToken = default)
     {
         if (limit is <= 0)
             return new List<FileSpec>();
@@ -323,14 +323,14 @@ public class AliyunFileStorage : IFileStorage
 
         _logger.LogTrace(
             s => s.Property("SearchPattern", searchPattern).Property("Limit", limit).Property("Skip", skip),
-            "Getting file list matching {Prefix} and {Pattern}...", criteria.Prefix, criteria.Pattern
+            "Getting file list matching {Prefix} and {Pattern}...", criteria.Prefix, criteria.Pattern!
         );
 
         int totalLimit = limit.GetValueOrDefault(Int32.MaxValue) < Int32.MaxValue
-            ? skip.GetValueOrDefault() + limit.Value
+            ? skip.GetValueOrDefault() + limit.GetValueOrDefault()
             : Int32.MaxValue;
 
-        string marker = null;
+        string? marker = null;
         var blobs = new List<OssObjectSummary>();
         do
         {
@@ -376,11 +376,11 @@ public class AliyunFileStorage : IFileStorage
 
     private class SearchCriteria
     {
-        public string Prefix { get; set; }
-        public Regex Pattern { get; set; }
+        public string Prefix { get; set; } = String.Empty;
+        public Regex? Pattern { get; set; }
     }
 
-    private SearchCriteria GetRequestCriteria(string searchPattern)
+    private SearchCriteria GetRequestCriteria(string? searchPattern)
     {
         if (String.IsNullOrEmpty(searchPattern))
             return new SearchCriteria { Prefix = String.Empty };
@@ -390,7 +390,7 @@ public class AliyunFileStorage : IFileStorage
         bool hasWildcard = wildcardPos >= 0;
 
         string prefix = normalizedSearchPattern;
-        Regex patternRegex = null;
+        Regex? patternRegex = null;
 
         if (hasWildcard)
         {
@@ -427,7 +427,7 @@ public class AliyunFileStorage : IFileStorage
 
     private string NormalizePath(string path)
     {
-        return path?.Replace('\\', '/');
+        return path.Replace('\\', '/');
     }
 
     private bool DoesBucketExist(string bucketName)

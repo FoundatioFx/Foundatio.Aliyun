@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Foundatio.Storage;
 using Foundatio.Tests.Storage;
@@ -11,9 +11,9 @@ public class AliyunStorageTests : FileStorageTestsBase
 {
     public AliyunStorageTests(ITestOutputHelper output) : base(output) { }
 
-    protected override IFileStorage GetStorage()
+    protected override IFileStorage? GetStorage()
     {
-        string connectionString = Configuration.GetConnectionString("AliyunConnectionString");
+        string? connectionString = Configuration.GetConnectionString("AliyunConnectionString");
         if (String.IsNullOrEmpty(connectionString))
             return null;
 
