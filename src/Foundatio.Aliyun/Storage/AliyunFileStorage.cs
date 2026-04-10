@@ -24,10 +24,8 @@ public class AliyunFileStorage : IFileStorage
 
     public AliyunFileStorage(AliyunFileStorageOptions options)
     {
-        if (options == null)
-            throw new ArgumentNullException(nameof(options));
-
-        ArgumentException.ThrowIfNullOrEmpty(options.ConnectionString);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.ConnectionString);
 
         _serializer = options.Serializer ?? DefaultSerializer.Instance;
         _logger = options.LoggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
