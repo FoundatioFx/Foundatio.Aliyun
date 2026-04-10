@@ -5,11 +5,11 @@ namespace Foundatio;
 
 public abstract class AliyunConnectionStringBuilder
 {
-    public string Endpoint { get; set; } = null!;
+    public string Endpoint { get; set; } = string.Empty;
 
-    public string AccessKey { get; set; } = null!;
+    public string AccessKey { get; set; } = string.Empty;
 
-    public string SecretKey { get; set; } = null!;
+    public string SecretKey { get; set; } = string.Empty;
 
     protected AliyunConnectionStringBuilder() { }
 
