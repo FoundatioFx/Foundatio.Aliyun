@@ -10,7 +10,7 @@ public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBu
     {
     }
 
-    public AliyunFileStorageConnectionStringBuilder(string connectionString) : base(connectionString)
+    public AliyunFileStorageConnectionStringBuilder(string? connectionString) : base(connectionString)
     {
     }
 
@@ -27,6 +27,7 @@ public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBu
             Bucket = value;
             return true;
         }
+
         return base.ParseItem(key, value);
     }
 
@@ -35,6 +36,7 @@ public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBu
         string connectionString = base.ToString();
         if (!String.IsNullOrEmpty(_bucket))
             connectionString += "Bucket=" + Bucket + ";";
+
         return connectionString;
     }
 }

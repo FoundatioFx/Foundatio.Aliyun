@@ -27,11 +27,10 @@ public class AliyunFileStorage : IFileStorage
         if (options == null)
             throw new ArgumentNullException(nameof(options));
 
+        ArgumentException.ThrowIfNullOrEmpty(options.ConnectionString);
+
         _serializer = options.Serializer ?? DefaultSerializer.Instance;
         _logger = options.LoggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
-
-        if (String.IsNullOrEmpty(options.ConnectionString))
-            throw new ArgumentException("ConnectionString is required.", nameof(options.ConnectionString));
 
         var connectionString = new AliyunFileStorageConnectionStringBuilder(options.ConnectionString);
         _client = new OssClient(connectionString.Endpoint, connectionString.AccessKey, connectionString.SecretKey);

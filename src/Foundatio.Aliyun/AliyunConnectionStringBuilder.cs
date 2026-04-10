@@ -13,7 +13,7 @@ public abstract class AliyunConnectionStringBuilder
 
     protected AliyunConnectionStringBuilder() { }
 
-    protected AliyunConnectionStringBuilder(string connectionString)
+    protected AliyunConnectionStringBuilder(string? connectionString)
     {
         if (String.IsNullOrEmpty(connectionString))
             throw new ArgumentNullException(nameof(connectionString));
