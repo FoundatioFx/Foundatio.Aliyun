@@ -31,7 +31,7 @@ public class AliyunFileStorage : IFileStorage
         _logger = options.LoggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
 
         if (String.IsNullOrEmpty(options.ConnectionString))
-            throw new ArgumentException("ConnectionString is required.", nameof(options));
+            throw new ArgumentException("ConnectionString is required.", nameof(options.ConnectionString));
 
         var connectionString = new AliyunFileStorageConnectionStringBuilder(options.ConnectionString);
         _client = new OssClient(connectionString.Endpoint, connectionString.AccessKey, connectionString.SecretKey);
@@ -379,7 +379,7 @@ public class AliyunFileStorage : IFileStorage
 
     private class SearchCriteria
     {
-        public string Prefix { get; set; } = null!;
+        public string Prefix { get; set; } = String.Empty;
         public Regex? Pattern { get; set; }
     }
 
