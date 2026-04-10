@@ -4,13 +4,13 @@ namespace Foundatio.Storage;
 
 public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBuilder
 {
-    private string? _bucket;
+    private string _bucket = null!;
 
     public AliyunFileStorageConnectionStringBuilder()
     {
     }
 
-    public AliyunFileStorageConnectionStringBuilder(string? connectionString) : base(connectionString)
+    public AliyunFileStorageConnectionStringBuilder(string connectionString) : base(connectionString)
     {
     }
 
@@ -27,7 +27,6 @@ public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBu
             Bucket = value;
             return true;
         }
-
         return base.ParseItem(key, value);
     }
 
@@ -36,7 +35,6 @@ public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBu
         string connectionString = base.ToString();
         if (!String.IsNullOrEmpty(_bucket))
             connectionString += "Bucket=" + Bucket + ";";
-
         return connectionString;
     }
 }

@@ -376,7 +376,7 @@ public class AliyunFileStorage : IFileStorage
 
     private class SearchCriteria
     {
-        public string Prefix { get; set; } = String.Empty;
+        public string Prefix { get; set; } = null!;
         public Regex? Pattern { get; set; }
     }
 

@@ -5,15 +5,15 @@ namespace Foundatio;
 
 public abstract class AliyunConnectionStringBuilder
 {
-    public string? Endpoint { get; set; }
+    public string Endpoint { get; set; } = null!;
 
-    public string? AccessKey { get; set; }
+    public string AccessKey { get; set; } = null!;
 
-    public string? SecretKey { get; set; }
+    public string SecretKey { get; set; } = null!;
 
     protected AliyunConnectionStringBuilder() { }
 
-    protected AliyunConnectionStringBuilder(string? connectionString)
+    protected AliyunConnectionStringBuilder(string connectionString)
     {
         if (String.IsNullOrEmpty(connectionString))
             throw new ArgumentNullException(nameof(connectionString));
