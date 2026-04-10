@@ -4,7 +4,7 @@ namespace Foundatio.Storage;
 
 public class AliyunFileStorageOptions : SharedOptions
 {
-    public string ConnectionString { get; set; } = string.Empty;
+    public string? ConnectionString { get; set; }
 }
 
 public class AliyunFileStorageOptionsBuilder : SharedOptionsBuilder<AliyunFileStorageOptions, AliyunFileStorageOptionsBuilder>

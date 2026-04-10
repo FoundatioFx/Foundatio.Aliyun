@@ -4,7 +4,7 @@ namespace Foundatio.Storage;
 
 public class AliyunFileStorageConnectionStringBuilder : AliyunConnectionStringBuilder
 {
-    private string _bucket = string.Empty;
+    private string? _bucket;
 
     public AliyunFileStorageConnectionStringBuilder()
     {
