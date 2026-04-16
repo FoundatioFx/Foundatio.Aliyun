@@ -9,11 +9,9 @@ public class AliyunFileStorageOptions : SharedOptions
 
 public class AliyunFileStorageOptionsBuilder : SharedOptionsBuilder<AliyunFileStorageOptions, AliyunFileStorageOptionsBuilder>
 {
-    public AliyunFileStorageOptionsBuilder ConnectionString(string connectionString)
+    public AliyunFileStorageOptionsBuilder ConnectionString(string? connectionString)
     {
-        if (String.IsNullOrEmpty(connectionString))
-            throw new ArgumentNullException(nameof(connectionString));
-        Target.ConnectionString = connectionString;
+        Target.ConnectionString = String.IsNullOrEmpty(connectionString) ? null : connectionString;
         return this;
     }
 }
